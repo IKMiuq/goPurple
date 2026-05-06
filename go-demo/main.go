@@ -3,34 +3,30 @@ package main
 import (
 	"fmt"
 	"net/http"
-	"sync"
-	"time"
 )
 
 //10 конкурентных запросов
 //вывести в консоль 10 статусов
 
 func main() {
-	t := time.Now()
-	url := "https://google.com"
-	var wg sync.WaitGroup
+	var url string = "https://google.com"
+	code := make(chan int)
 	for i := 0; i < 10; i++ {
-		wg.Add(1)
-		go func() {
-			getHttpCode(url)
-			defer wg.Done()
-		}()
+		go getHttpCode(url, code)
+		res := <-code
+		fmt.Printf("Код: %d\n", res)
 	}
-	wg.Wait()
-	fmt.Println(time.Since(t))
+	for res := range code {
+		fmt.Printf("Получен ответ %d\n", res)
+	}
 }
 
-func getHttpCode(url string) {
+func getHttpCode(url string, codeCh chan int) {
 	//error
 	//url := "https://google.com"
 	resp, err := http.Get(url)
 	if err != nil {
 		fmt.Printf("Ошибка %s при выполнении запроса", err.Error())
 	}
-	fmt.Printf("Получен ответ %d\n", resp.StatusCode)
+	codeCh <- resp.StatusCode
 }
