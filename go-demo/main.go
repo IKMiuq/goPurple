@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"net/http"
 	"sync"
 )
 
@@ -10,13 +9,13 @@ import (
 //вывести в консоль 10 статусов
 
 func main() {
-	var url string = "https://google.com"
-	code := make(chan int)
+	arr := []int{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13}
 	var wg sync.WaitGroup
-	for i := 0; i < 10; i++ {
+	code := make(chan int)
+	for i := 1; i < 4; i++ {
 		wg.Add(1)
 		go func() {
-			getHttpCode(url, code)
+			getMath(arr, i, code)
 			wg.Done()
 		}()
 	}
@@ -24,17 +23,17 @@ func main() {
 		wg.Wait()
 		close(code)
 	}()
+	var summ int = 0
 	for res := range code {
-		fmt.Printf("Получен ответ %d\n", res)
+		summ += res
 	}
+	fmt.Printf("Resut summ:= %d\n", summ)
 }
 
-func getHttpCode(url string, codeCh chan int) {
-	//error
-	//url := "https://google.com"
-	resp, err := http.Get(url)
-	if err != nil {
-		fmt.Printf("Ошибка %s при выполнении запроса", err.Error())
+func getMath(arr []int, num int, codeCh chan int) {
+	var summ int = 0
+	for i := (num - 1) * 4; i < num*4; i++ {
+		summ += arr[i]
 	}
-	codeCh <- resp.StatusCode
+	codeCh <- summ
 }
