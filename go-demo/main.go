@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"net/http"
+	"sync"
 )
 
 //10 конкурентных запросов
@@ -11,11 +12,18 @@ import (
 func main() {
 	var url string = "https://google.com"
 	code := make(chan int)
+	var wg sync.WaitGroup
 	for i := 0; i < 10; i++ {
-		go getHttpCode(url, code)
-		res := <-code
-		fmt.Printf("Код: %d\n", res)
+		wg.Add(1)
+		go func() {
+			getHttpCode(url, code)
+			wg.Done()
+		}()
 	}
+	go func() {
+		wg.Wait()
+		close(code)
+	}()
 	for res := range code {
 		fmt.Printf("Получен ответ %d\n", res)
 	}
