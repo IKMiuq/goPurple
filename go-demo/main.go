@@ -2,38 +2,31 @@ package main
 
 import (
 	"fmt"
-	"sync"
 )
 
-//10 конкурентных запросов
-//вывести в консоль 10 статусов
+func sumPart(arr []int, ch chan int) {
+	summ := 0
+	for _, num := range arr {
+		summ += num
+	}
+	ch <- summ
+}
 
 func main() {
 	arr := []int{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13}
-	var wg sync.WaitGroup
-	code := make(chan int)
-	for i := 1; i < 4; i++ {
-		wg.Add(1)
-		go func() {
-			getMath(arr, i, code)
-			wg.Done()
-		}()
+	numGoroutines := 3
+	code := make(chan int, numGoroutines)
+	partSize := len(arr) / numGoroutines
+	for i := 0; i < numGoroutines; i++ {
+		start := i * partSize
+		end := start + partSize
+		go sumPart(arr[start:end], code)
 	}
-	go func() {
-		wg.Wait()
-		close(code)
-	}()
-	var summ int = 0
-	for res := range code {
-		summ += res
-	}
-	fmt.Printf("Resut summ:= %d\n", summ)
-}
 
-func getMath(arr []int, num int, codeCh chan int) {
-	var summ int = 0
-	for i := (num - 1) * 4; i < num*4; i++ {
-		summ += arr[i]
+	totalSum := 0
+	for i := 0; i < numGoroutines; i++ {
+		totalSum += <-code
 	}
-	codeCh <- summ
+
+	fmt.Println("Total sum: ", totalSum)
 }
